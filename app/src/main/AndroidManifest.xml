@@ -2,8 +2,17 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!--  藍芽權限  -->
-    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <!--  藍芽相關權限  -->
+    <!-- 在舊設備上請求舊版藍牙權限 -->
+    <uses-permission android:name="android.permission.BLUETOOTH"
+        android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"
+        android:maxSdkVersion="30" />
+    <!-- 當你的APP尋找藍牙設備時才需要 -->
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+    <!-- 當你的APP使手機可被藍牙設備發現時才需要 -->
+    <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
+    <!-- 僅當你的APP與已配對的藍牙設備通信時才需要 -->
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <!--  重要：Android10以上需要定位權限  -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
