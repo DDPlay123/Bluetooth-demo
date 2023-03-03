@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">藍芽DEMO</string>
+
+    <string name="toast_ask_location_permission">請開啟定位權限</string>
+    <string name="toast_not_found_bluetooth_drive">未找到藍芽驅動</string>
+    <string name="toast_please_open_bluetooth">請開啟您的藍芽</string>
+
+    <string name="ui_scan_device">掃描設備</string>
+    <string name="ui_go_chat">前往聊天</string>
+    <string name="ui_ble">低功號藍芽</string>
+</resources>
