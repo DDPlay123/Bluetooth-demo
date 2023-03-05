@@ -2,10 +2,18 @@
     <string name="app_name">藍芽DEMO</string>
 
     <string name="toast_ask_location_permission">請開啟定位權限</string>
+    <string name="toast_ask_bluetooth_permission">請開啟藍芽權限</string>
     <string name="toast_not_found_bluetooth_drive">未找到藍芽驅動</string>
     <string name="toast_please_open_bluetooth">請開啟您的藍芽</string>
 
+    <string name="ut_init_bluetooth">初始化藍芽</string>
     <string name="ui_scan_device">掃描設備</string>
     <string name="ui_go_chat">前往聊天</string>
     <string name="ui_ble">低功號藍芽</string>
+    <string name="ui_already_pair">已配對</string>
+    <string name="ui_other_device">其他設備</string>
+    <string name="ui_pair_other_device">配對其他設備</string>
+    <string name="ui_hc_05">HC-05</string>
+    <string name="ui_connect_state">連線設備：%s</string>
+
 </resources>

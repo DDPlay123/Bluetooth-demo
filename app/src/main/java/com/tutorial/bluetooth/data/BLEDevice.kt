@@ -1,6 +1,6 @@
 package com.tutorial.bluetooth.data
 
-data class Device(
+data class BLEDevice(
     val name: String,
     val id: String
 )

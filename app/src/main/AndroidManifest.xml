@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <!--  藍芽相關權限  -->
+    <uses-feature android:name="android.hardware.bluetooth_le" android:required="true" />
     <!-- 在舊設備上請求舊版藍牙權限 -->
     <uses-permission android:name="android.permission.BLUETOOTH"
         android:maxSdkVersion="30" />

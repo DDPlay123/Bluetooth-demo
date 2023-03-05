@@ -3,17 +3,17 @@ package com.tutorial.bluetooth.adapter
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.tutorial.bluetooth.data.Device
+import com.tutorial.bluetooth.data.BLEDevice
 import com.tutorial.bluetooth.databinding.ItemScanDeviceBinding
 
 class ScanDeviceAdapter : RecyclerView.Adapter<ScanDeviceAdapter.ScanDeviceViewHolder>() {
-    private var scanList: List<Device> = ArrayList()
+    private var scanList: List<BLEDevice> = ArrayList()
 
     // Item點擊。
-    lateinit var onItemClickCallback: ((Int, Device) -> Unit)
+    lateinit var onItemClickCallback: ((Int, BLEDevice) -> Unit)
 
     // 設定資料進來。
-    fun setterData(scanList: List<Device>) {
+    fun setterData(scanList: List<BLEDevice>) {
         this.scanList = scanList
         notifyItemChanged(0, scanList.size)
     }
