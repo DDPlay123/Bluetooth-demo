@@ -4,10 +4,8 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
+import android.bluetooth.BluetoothSocket
+import android.content.*
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
@@ -28,6 +26,12 @@ import com.tutorial.bluetooth.utils.Method
 import com.tutorial.bluetooth.utils.displayShortToast
 import com.tutorial.bluetooth.utils.requestBluetoothPermission
 import com.tutorial.bluetooth.utils.requestLocationPermission
+import kotlinx.coroutines.*
+import java.io.IOException
+import java.io.InputStream
+import java.io.OutputStream
+import java.util.*
+import kotlin.collections.ArrayList
 
 class MainActivity : AppCompatActivity() {
     companion object {
@@ -45,6 +49,12 @@ class MainActivity : AppCompatActivity() {
     private val bluetoothAdapter: BluetoothAdapter by lazy { BluetoothAdapter.getDefaultAdapter() }
     private var pairedDevices: Set<BluetoothDevice>? = null
     private var pairedDevice: BluetoothDevice? = null
+
+    private var isConnectOther = true
+
+    private var socket: BluetoothSocket? = null
+    private var output: OutputStream? = null
+    private var input: InputStream? = null
 
     /**
      * 請求權限Callback
@@ -97,7 +107,19 @@ class MainActivity : AppCompatActivity() {
      */
     override fun onDestroy() {
         unregisterReceiver(receiver)
+        socket = null
+        output = null
+        input = null
         super.onDestroy()
+    }
+
+    /**
+     * 當系統記憶體不足時，執行GC
+     */
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        if (level <= ComponentCallbacks2.TRIM_MEMORY_MODERATE)
+            System.gc()
     }
 
     /**
@@ -125,6 +147,21 @@ class MainActivity : AppCompatActivity() {
 
             btnPair.setOnClickListener {
                 Intent(BLE_LAUNCH).apply { startActivity(this) }
+            }
+
+            btnSend.setOnClickListener {
+                if (socket == null || isConnectOther) {
+                    initSocket()
+                    return@setOnClickListener
+                }
+                try {
+                    if (edContent.text?.isNotEmpty() == true) {
+                        output?.write(edContent.text.toString().toByteArray(Charsets.UTF_8))
+                        Toast.makeText(this@MainActivity, "Success", Toast.LENGTH_SHORT).show()
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             }
         }
     }
@@ -160,21 +197,93 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun initSocket() {
+        Toast.makeText(this@MainActivity, "Connecting...", Toast.LENGTH_LONG).show()
+        // 確定權限開啟
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+            (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT)
+                    != PackageManager.PERMISSION_GRANTED ||
+                    ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN)
+                    != PackageManager.PERMISSION_GRANTED)) {
+            requestBluetoothPermission()
+            return
+        }
+        try {
+            // Socket 連線
+            socket = pairedDevice?.createRfcommSocketToServiceRecord(pairedDevice?.uuids?.get(0)?.uuid) ?: return
+            isConnectOther = false
+            CoroutineScope(Dispatchers.Default).launch {
+                while (socket?.isConnected == false) {
+                    try {
+                        socket?.connect()
+                        if (socket?.isConnected == true) {
+                            Method.logE("initSocket", "Connect Success")
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(this@MainActivity, "Connect Success!", Toast.LENGTH_SHORT).show()
+                            }
+                            output = socket?.outputStream
+                            input = socket?.inputStream
+                            startReadingFromSocket( /*開始監聽資料*/ )
+                        }
+                    } catch (e: IOException) {
+                        e.printStackTrace()
+                        Method.logE("initSocket", "Connect Error: ${e.message.toString()}")
+                    } catch (e: InterruptedException) {
+                        e.printStackTrace()
+                        Method.logE("initSocket", "Connect Error: ${e.message.toString()}")
+                    }
+                    delay(5000)
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Method.logE("initSocket", "Error: ${e.message.toString()}")
+        }
+    }
+
+    private fun startReadingFromSocket() {
+        CoroutineScope(Dispatchers.Default).launch {
+            while (socket?.isConnected == true) {
+                try {
+                    val data = ByteArray(1024)
+                    val length = input?.read(data)
+                    if (length != null && length > 0) {
+                        val receivedData = data.copyOf(length)
+                        withContext(Dispatchers.Main) {
+                            binding.tvReceive.text =
+                                String.format(getString(R.string.ui_receive_data, receivedData.toString(Charsets.UTF_8)))
+                        }
+                    }
+                } catch (e: IOException) {
+                    e.printStackTrace()
+                    Method.logE("startReadingFromSocket", "Error: ${e.message.toString()}")
+                    break
+                }
+            }
+            Method.logE("startReadingFromSocket", "Socket disconnected")
+        }
+    }
+
     /**
      * Service
      */
     private val receiver = object : BroadcastReceiver() {
         @SuppressLint("MissingPermission")
         override fun onReceive(context: Context?, intent: Intent?) {
-            Method.logE("onReceive", intent?.action.toString())
             pairedDevice = intent?.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
             binding.tvHC05.text = String.format(getString(R.string.ui_connect_state), pairedDevice?.name)
             try {
+                isConnectOther = true
                 pairedDevice?.createBond()
                 Toast.makeText(this@MainActivity, "Connect ${pairedDevice?.name}", Toast.LENGTH_SHORT).show()
+                binding.btnSend.apply {
+                    isClickable = true
+                    isEnabled = true
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
                 Method.logE("onReceive", "Connect Error: ${e.message.toString()}")
+                finish()
             }
         }
     }

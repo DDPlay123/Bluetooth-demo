@@ -3,6 +3,11 @@ package com.tutorial.bluetooth.utils
 import android.os.Build
 import androidx.annotation.RequiresApi
 
+/**
+ * @author 麥光廷
+ * @date 2023/03/06
+ * 存放一些常用到的靜態變數。
+ */
 object Contracts {
     /**
      * Variable

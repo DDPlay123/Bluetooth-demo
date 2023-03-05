@@ -13,7 +13,13 @@
     <string name="ui_already_pair">已配對</string>
     <string name="ui_other_device">其他設備</string>
     <string name="ui_pair_other_device">配對其他設備</string>
+    <string name="ui_wait">等待中\.\.\.</string>
+    <string name="ut_data">輸入訊息</string>
     <string name="ui_hc_05">HC-05</string>
     <string name="ui_connect_state">連線設備：%s</string>
+    <string name="ui_send">送出</string>
+    <string name="ui_receive">接收</string>
+    <string name="ui_receive_data">接收：%s</string>
+    <string name="ui_loading">等待連線\.\.\.</string>
 
 </resources>

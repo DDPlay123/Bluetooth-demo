@@ -12,7 +12,7 @@ import com.tutorial.bluetooth.utils.Contracts.location_permission
 
 /**
  * @author 麥光廷
- * @date 2023/02/26
+ * @date 2023/03/06
  * 存放一些常用到的擴充函數。
  */
 fun Activity.requestLocationPermission(): Boolean {
@@ -46,6 +46,3 @@ fun Activity.hideSoftKeyboard() {
 
 fun Context.displayShortToast(message: String) =
     Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
-
-fun Context.displayLongToast(message: String) =
-    Toast.makeText(this, message, Toast.LENGTH_LONG).show()

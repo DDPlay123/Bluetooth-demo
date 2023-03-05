@@ -106,7 +106,52 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:text="@string/ui_hc_05"
+            android:text="@string/ui_wait"
+            android:textColor="@color/black"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toTopOf="@+id/edContent"
+            app:layout_constraintEnd_toEndOf="@+id/btnScan"
+            app:layout_constraintHorizontal_bias="0"
+            app:layout_constraintStart_toStartOf="@+id/btnScan"
+            app:layout_constraintTop_toBottomOf="@+id/btnPair" />
+
+        <androidx.appcompat.widget.AppCompatEditText
+            android:id="@+id/edContent"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:hint="@string/ut_data"
+            android:inputType="text"
+            android:textColor="@color/black"
+            android:textColorHint="@android:color/darker_gray"
+            app:layout_constraintBottom_toTopOf="@+id/tvReceive"
+            app:layout_constraintEnd_toStartOf="@+id/btnSend"
+            app:layout_constraintHorizontal_chainStyle="packed"
+            app:layout_constraintStart_toStartOf="@+id/imgLogo"
+            app:layout_constraintTop_toBottomOf="@+id/tvHC_05" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSend"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:backgroundTint="#056CEA"
+            android:clickable="false"
+            android:enabled="false"
+            android:text="@string/ui_send"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="@+id/edContent"
+            app:layout_constraintEnd_toEndOf="@+id/tvLogo"
+            app:layout_constraintHorizontal_bias="0"
+            app:layout_constraintStart_toEndOf="@+id/edContent"
+            app:layout_constraintTop_toTopOf="@+id/edContent" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tvReceive"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="@string/ui_receive"
             android:textColor="@color/black"
             android:textSize="18sp"
             android:textStyle="bold"
@@ -114,7 +159,7 @@
             app:layout_constraintEnd_toEndOf="@+id/btnScan"
             app:layout_constraintHorizontal_bias="0"
             app:layout_constraintStart_toStartOf="@+id/btnScan"
-            app:layout_constraintTop_toBottomOf="@+id/btnPair" />
+            app:layout_constraintTop_toBottomOf="@+id/edContent" />
 
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/guideBottom"

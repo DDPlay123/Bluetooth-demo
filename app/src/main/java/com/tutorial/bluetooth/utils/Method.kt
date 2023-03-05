@@ -10,7 +10,7 @@ import com.tutorial.bluetooth.utils.Contracts.PERMISSION_CODE
 
 /**
  * @author 麥光廷
- * @date 2023/02/26
+ * @date 2023/03/06
  * 存放一些常用到的方法。
  */
 object Method {
