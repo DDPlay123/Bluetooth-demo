@@ -4,6 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothSocket
 import android.content.*
 import android.content.pm.PackageManager
@@ -23,6 +24,7 @@ import com.tutorial.bluetooth.utils.Contracts.PERMISSION_COARSE_LOCATION
 import com.tutorial.bluetooth.utils.Contracts.PERMISSION_CODE
 import com.tutorial.bluetooth.utils.Contracts.PERMISSION_FINE_LOCATION
 import com.tutorial.bluetooth.utils.Method
+import com.tutorial.bluetooth.utils.Method.parcelable
 import com.tutorial.bluetooth.utils.displayShortToast
 import com.tutorial.bluetooth.utils.requestBluetoothPermission
 import com.tutorial.bluetooth.utils.requestLocationPermission
@@ -46,7 +48,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var pairDeviceAdapter: ScanDeviceAdapter
 
     // 藍芽
-    private val bluetoothAdapter: BluetoothAdapter by lazy { BluetoothAdapter.getDefaultAdapter() }
+    private val bluetoothAdapter: BluetoothAdapter by lazy {
+        val bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+        bluetoothManager.adapter
+    }
     private var pairedDevices: Set<BluetoothDevice>? = null
     private var pairedDevice: BluetoothDevice? = null
 
@@ -270,7 +275,7 @@ class MainActivity : AppCompatActivity() {
     private val receiver = object : BroadcastReceiver() {
         @SuppressLint("MissingPermission")
         override fun onReceive(context: Context?, intent: Intent?) {
-            pairedDevice = intent?.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+            pairedDevice = intent?.parcelable(BluetoothDevice.EXTRA_DEVICE)
             binding.tvHC05.text = String.format(getString(R.string.ui_connect_state), pairedDevice?.name)
             try {
                 isConnectOther = true
