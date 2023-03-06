@@ -14,6 +14,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
+import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.tutorial.bluetooth.adapter.ScanDeviceAdapter
 import com.tutorial.bluetooth.data.BLEDevice
@@ -134,6 +135,7 @@ class MainActivity : AppCompatActivity() {
         binding.rvListPair.run {
             layoutManager = LinearLayoutManager(this@MainActivity, LinearLayoutManager.VERTICAL, false)
             adapter = pairDeviceAdapter
+            addItemDecoration(DividerItemDecoration(baseContext, DividerItemDecoration.VERTICAL))
             pairDeviceAdapter
         }.apply {
             onItemClickCallback = { _, item ->
