@@ -18,16 +18,13 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.tutorial.bluetooth.adapter.ScanDeviceAdapter
 import com.tutorial.bluetooth.data.BLEDevice
 import com.tutorial.bluetooth.databinding.ActivityMainBinding
+import com.tutorial.bluetooth.utils.*
 import com.tutorial.bluetooth.utils.Contracts.PERMISSION_BLUETOOTH_CONNECT
 import com.tutorial.bluetooth.utils.Contracts.PERMISSION_BLUETOOTH_SCAN
 import com.tutorial.bluetooth.utils.Contracts.PERMISSION_COARSE_LOCATION
 import com.tutorial.bluetooth.utils.Contracts.PERMISSION_CODE
 import com.tutorial.bluetooth.utils.Contracts.PERMISSION_FINE_LOCATION
-import com.tutorial.bluetooth.utils.Method
 import com.tutorial.bluetooth.utils.Method.parcelable
-import com.tutorial.bluetooth.utils.displayShortToast
-import com.tutorial.bluetooth.utils.requestBluetoothPermission
-import com.tutorial.bluetooth.utils.requestLocationPermission
 import kotlinx.coroutines.*
 import java.io.IOException
 import java.io.InputStream
@@ -46,6 +43,7 @@ class MainActivity : AppCompatActivity() {
     // 參數
     private var pairDeviceList: MutableList<BLEDevice> = ArrayList()
     private lateinit var pairDeviceAdapter: ScanDeviceAdapter
+    private var receiver: BroadcastReceiver? = null
 
     // 藍芽
     private val bluetoothAdapter: BluetoothAdapter by lazy {
@@ -111,7 +109,8 @@ class MainActivity : AppCompatActivity() {
      * 結束Activity
      */
     override fun onDestroy() {
-        unregisterReceiver(receiver)
+        if (receiver != null)
+            unregisterReceiver(receiver)
         socket = null
         output = null
         input = null
@@ -138,7 +137,11 @@ class MainActivity : AppCompatActivity() {
             pairDeviceAdapter
         }.apply {
             onItemClickCallback = { _, item ->
-                Toast.makeText(this@MainActivity, item.name, Toast.LENGTH_SHORT).show()
+                // 連線藍芽
+                pairedDevices?.find { it.address == item.address }?.let { device ->
+                    pairedDevice = device
+                    pairDevice(device)
+                }
             }
         }
     }
@@ -146,7 +149,8 @@ class MainActivity : AppCompatActivity() {
     private fun setListener() {
         binding.run {
             btnScan.setOnClickListener {
-                if (!requestLocationPermission()) return@setOnClickListener
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && !requestLocationPermission())
+                    return@setOnClickListener
                 initBluetooth( /*初始化藍芽*/ )
             }
 
@@ -155,10 +159,14 @@ class MainActivity : AppCompatActivity() {
             }
 
             btnSend.setOnClickListener {
-                if (socket == null || isConnectOther) {
+                hideKeyboard()
+                hideSoftKeyboard()
+
+                if (socket == null || socket?.isConnected == false || isConnectOther) {
                     initSocket()
                     return@setOnClickListener
                 }
+
                 try {
                     if (edContent.text?.isNotEmpty() == true) {
                         output?.write(edContent.text.toString().toByteArray(Charsets.UTF_8))
@@ -174,10 +182,8 @@ class MainActivity : AppCompatActivity() {
     private fun initBluetooth() {
         // 確定權限開啟
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
-            (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT)
-                    != PackageManager.PERMISSION_GRANTED ||
-                    ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN)
-                    != PackageManager.PERMISSION_GRANTED)) {
+            (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED ||
+            ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED)) {
             requestBluetoothPermission()
             return
         }
@@ -188,6 +194,7 @@ class MainActivity : AppCompatActivity() {
         bluetoothAdapter.let {
             // 先找已配對過的
             pairedDevices = it.bondedDevices
+            pairDeviceList.clear()
             pairedDevices?.forEach { device ->
                 pairDeviceList.add(BLEDevice(device.name, device.address))
             }.also { pairDeviceAdapter.setterData(pairDeviceList) }
@@ -197,6 +204,7 @@ class MainActivity : AppCompatActivity() {
                 isClickable = true
                 isEnabled = true
             }
+            initService( /*初始化BroadcastReceiver*/ )
             val filter = IntentFilter(DEVICE_SELECTED)
             registerReceiver(receiver, filter)
         }
@@ -206,10 +214,8 @@ class MainActivity : AppCompatActivity() {
         Toast.makeText(this@MainActivity, "Connecting...", Toast.LENGTH_LONG).show()
         // 確定權限開啟
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
-            (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT)
-                    != PackageManager.PERMISSION_GRANTED ||
-                    ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN)
-                    != PackageManager.PERMISSION_GRANTED)) {
+            (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED ||
+            ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED)) {
             requestBluetoothPermission()
             return
         }
@@ -255,8 +261,7 @@ class MainActivity : AppCompatActivity() {
                     if (length != null && length > 0) {
                         val receivedData = data.copyOf(length)
                         withContext(Dispatchers.Main) {
-                            binding.tvReceive.text =
-                                String.format(getString(R.string.ui_receive_data, receivedData.toString(Charsets.UTF_8)))
+                            binding.tvReceive.text = String.format(getString(R.string.ui_receive_data, receivedData.toString(Charsets.UTF_8)))
                         }
                     }
                 } catch (e: IOException) {
@@ -269,27 +274,38 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Service
-     */
-    private val receiver = object : BroadcastReceiver() {
-        @SuppressLint("MissingPermission")
-        override fun onReceive(context: Context?, intent: Intent?) {
-            pairedDevice = intent?.parcelable(BluetoothDevice.EXTRA_DEVICE)
-            binding.tvHC05.text = String.format(getString(R.string.ui_connect_state), pairedDevice?.name)
-            try {
-                isConnectOther = true
-                pairedDevice?.createBond()
-                Toast.makeText(this@MainActivity, "Connect ${pairedDevice?.name}", Toast.LENGTH_SHORT).show()
-                binding.btnSend.apply {
-                    isClickable = true
-                    isEnabled = true
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                Method.logE("onReceive", "Connect Error: ${e.message.toString()}")
-                finish()
+    private fun initService() {
+        receiver = object : BroadcastReceiver() {
+            @SuppressLint("MissingPermission")
+            override fun onReceive(context: Context?, intent: Intent?) {
+                pairedDevice = intent?.parcelable(BluetoothDevice.EXTRA_DEVICE)
+                pairedDevice?.let { pairDevice(it) }
             }
+        }
+    }
+
+    private fun pairDevice(device: BluetoothDevice) {
+        // 確定權限開啟
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+            (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED ||
+            ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED)) {
+            requestBluetoothPermission()
+            return
+        }
+        // 連線藍芽
+        binding.tvHC05.text = String.format(getString(R.string.ui_connect_state), device.name)
+        try {
+            isConnectOther = true
+            device.createBond()
+            Toast.makeText(this@MainActivity, "Connect ${device.name}", Toast.LENGTH_SHORT).show()
+            binding.btnSend.apply {
+                isClickable = true
+                isEnabled = true
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Method.logE("Pair", "Connect Error: ${e.message.toString()}")
+            finish()
         }
     }
 }

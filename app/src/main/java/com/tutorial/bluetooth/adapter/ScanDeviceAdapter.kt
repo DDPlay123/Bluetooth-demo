@@ -27,7 +27,7 @@ class ScanDeviceAdapter : RecyclerView.Adapter<ScanDeviceAdapter.ScanDeviceViewH
         val item = scanList[position]
         holder.binding.apply {
             tvName.text = item.name
-            tvId.text = item.id
+            tvId.text = item.address
 
             root.setOnClickListener { onItemClickCallback.invoke(position, item) }
         }
