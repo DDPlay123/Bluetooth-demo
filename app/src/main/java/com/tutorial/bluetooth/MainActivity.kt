@@ -60,6 +60,8 @@ class MainActivity : AppCompatActivity() {
     private var output: OutputStream? = null
     private var input: InputStream? = null
 
+    private val buffer = StringBuilder()
+
     /**
      * 請求權限Callback
      */
@@ -261,10 +263,9 @@ class MainActivity : AppCompatActivity() {
                     val data = ByteArray(1024)
                     val length = input?.read(data)
                     if (length != null && length > 0) {
-                        val receivedData = data.copyOf(length)
-                        withContext(Dispatchers.Main) {
-                            binding.tvReceive.text = String.format(getString(R.string.ui_receive_data, receivedData.toString(Charsets.UTF_8)))
-                        }
+                        buffer.append(data.toString(Charsets.UTF_8))
+                        if(buffer.contains('\n'))
+                            processData()
                     }
                 } catch (e: IOException) {
                     e.printStackTrace()
@@ -273,6 +274,14 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             Method.logE("startReadingFromSocket", "Socket disconnected")
+        }
+    }
+
+    private fun processData() {
+        CoroutineScope(Dispatchers.Main).launch {
+            val receivedData = buffer.substring(0, buffer.indexOf('\n')).toString()
+            buffer.clear()
+            binding.tvReceive.text = String.format(getString(R.string.ui_receive_data, receivedData))
         }
     }
 

@@ -6,7 +6,7 @@
     <uses-feature android:name="android.hardware.bluetooth_le" android:required="true" />
     <!-- 在舊設備上請求舊版藍牙權限 -->
     <uses-permission android:name="android.permission.BLUETOOTH"
-        android:maxSdkVersion="30" />
+        tools:remove="android:maxSdkVersion" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"
         android:maxSdkVersion="30" />
     <!-- 當你的APP尋找藍牙設備時才需要 -->
