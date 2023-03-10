@@ -27,9 +27,7 @@ import com.tutorial.bluetooth.utils.Contracts.PERMISSION_CODE
 import com.tutorial.bluetooth.utils.Contracts.PERMISSION_FINE_LOCATION
 import com.tutorial.bluetooth.utils.Method.parcelable
 import kotlinx.coroutines.*
-import java.io.IOException
-import java.io.InputStream
-import java.io.OutputStream
+import java.io.*
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -60,7 +58,7 @@ class MainActivity : AppCompatActivity() {
     private var output: OutputStream? = null
     private var input: InputStream? = null
 
-    private val buffer = StringBuilder()
+    private val stringBuilder = StringBuilder()
 
     /**
      * 請求權限Callback
@@ -258,14 +256,20 @@ class MainActivity : AppCompatActivity() {
 
     private fun startReadingFromSocket() {
         CoroutineScope(Dispatchers.Default).launch {
+            val buffer = ByteArray(4096)
             while (socket?.isConnected == true) {
                 try {
-                    val data = ByteArray(1024)
-                    val length = input?.read(data)
-                    if (length != null && length > 0) {
-                        buffer.append(data.toString(Charsets.UTF_8))
-                        if(buffer.contains('\n'))
-                            processData()
+                    withContext(Dispatchers.IO) {
+                        input?.read(buffer)?.let { count ->
+                            if (count > 0) {
+                                val receivedData = buffer.copyOf(count)
+                                stringBuilder.append(receivedData.toString(Charsets.UTF_8))
+                                if (stringBuilder.endsWith("\\n"))
+                                    processData()
+                                else
+                                    stringBuilder.clear()
+                            }
+                        }
                     }
                 } catch (e: IOException) {
                     e.printStackTrace()
@@ -279,8 +283,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun processData() {
         CoroutineScope(Dispatchers.Main).launch {
-            val receivedData = buffer.substring(0, buffer.indexOf('\n')).toString()
-            buffer.clear()
+            val receivedData = stringBuilder.removeSuffix("\\n").toString()
+            stringBuilder.clear()
             binding.tvReceive.text = String.format(getString(R.string.ui_receive_data, receivedData))
         }
     }
